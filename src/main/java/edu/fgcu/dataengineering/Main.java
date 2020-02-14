@@ -2,6 +2,7 @@ package edu.fgcu.dataengineering;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.opencsv.CSVParser;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import java.io.FileReader;
@@ -47,7 +48,7 @@ public class Main {
     }
     //end of testing
 
-    //load contents of authors-csv json into array of Authors
+    //load contents of authors json into array of Authors
     Gson gson = new Gson();
 
     Type authorType = new TypeToken<ArrayList<Author>>() {
@@ -67,6 +68,34 @@ public class Main {
       }
     } catch (SQLException e) {
       e.printStackTrace();
+    }
+
+    //load contents of book-csv into array of Books
+    reader = new CSVReader(new FileReader("src/Data/bookstore_report2.csv"));
+    String[] bookLine ;
+    ArrayList<Book> bookList = new ArrayList<>();
+    Book newBook;
+    //skip metadata line
+    reader.readNext();
+    while ((bookLine = reader.readNext()) != null) {
+      newBook = new Book(); // of the below fields, we are only inserting isbn, publisher, author, and title
+      newBook.setIsbn(bookLine[0]);
+      newBook.setBookTitle(bookLine[1]);
+      newBook.setAuthorName(bookLine[2]);
+      newBook.setPublisherName(bookLine[3]);
+      newBook.setStoreName(bookLine[4]);
+      newBook.setStoreLoc(bookLine[5]);
+      //insert statement
+      insert = "insert into book(isbn, publisher_name, author_name, book_title) values (?,?,?,?);";
+      try(PreparedStatement st = conn.prepareStatement((insert))){
+        st.setString(1, newBook.getIsbn());
+        st.setString(2, newBook.getPublisherName());
+        st.setString(3, newBook.getAuthorName());
+        st.setString(4, newBook.getBookTitle());
+        st.executeUpdate();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
     }
   }
 }
